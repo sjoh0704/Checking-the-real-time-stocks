@@ -1,7 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
 import datetime
+import sys
 import time
+import pygame
+import threading
+
+WIDTH = 512
+HEIGHT = 512
+WHITE = (255, 255, 255)
+BLACK = (0 ,0, 0)
 
 link_list = ["https://finance.yahoo.com/quote/UAVS?p=UAVS&.tsrc=fin-srch", "https://finance.yahoo.com/quote/ATNF?p=ATNF&.tsrc=fin-srch"]
 my_list = []
@@ -44,33 +52,80 @@ def business(url, list):
                 w = p.get_text()
         item = Item(title, x, y, z, w)
         list.append(item)
-        print(x, y, z, w)
 
 
     else:
         print(response.status_code)
 
 
-
-
-
-
-while True:
-    my_list = []
-
-    time.sleep(3)
-    for i in range(len(link_list)):
-        business(link_list[i], my_list)
-    # print("\n\n\n\n\n\n\n")
-
+def write_status():
     now = datetime.datetime.now()
     nowDatetime = now.strftime('%Y-%m-%d %H:%M:%S')
+    status = nowDatetime + '\n'
     print(nowDatetime)
-    # for i in range(len(my_list)):
-    #     print(my_list[i].title)
-    #     print(my_list[i].main, my_list[i].main_add)
-    #     print(my_list[i].sub, my_list[i].sub_add)
+    for i in range(len(my_list)):
+        status += my_list[i].title + '\n'
+        status += my_list[i].main + ' '+ my_list[i].main_add + "\n"
+        status += my_list[i].sub + ' ' + my_list[i].sub_add + "\n"
+    return status
 
+# 연습
+
+
+
+def runPad():
+    global pad, clk
+    font = pygame.font.SysFont(None, 30)  # 폰트 설정
+    exit = False
+    tmp = 1
+    while not exit:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                print("quit!")
+                pygame.quit()
+                sys.exit()
+
+        pad.fill(WHITE)
+        # my_list = []
+        threads = list()
+        my_list = list()
+        for i in range(len(link_list)):
+            thread = threading.Thread(target=business, args=(link_list[i], my_list))
+            thread.start()
+            threads.append(thread)
+        for thread in threads:
+            thread.join()
+
+        print("Finished")
+
+        y = 0
+        for i in range(len(my_list)):
+            y += 50
+            text1 = font.render(my_list[i].title, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+            pad.blit(text1, (50, y))
+            y += 50
+            text2 = font.render(my_list[i].main + ' ' + my_list[i].main_add, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+            pad.blit(text2, (50, y))
+            y += 50
+            text3 = font.render(my_list[i].sub + ' ' + my_list[i].sub_add, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+            pad.blit(text3, (50, y))
+        tmp_text = font.render(str(tmp), True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+        tmp += 1
+        pad.blit(tmp_text, (WIDTH-50,HEIGHT-50))
+
+
+        pygame.display.update()
+        time.sleep(3)
+
+
+def initPad():
+    global pad, clk
+    pygame.init()
+    pad = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("Real-time STOCKS")
+    clk = pygame.time.Clock()
+    runPad()
+initPad()
 
 
 
