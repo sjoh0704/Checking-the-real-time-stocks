@@ -1,15 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
-import datetime
 import sys
-import time
 import pygame
 import threading
 
-WIDTH = 512
-HEIGHT = 512
+WIDTH = 450
+HEIGHT = 250
+TEXT_SIZE = 25
 WHITE = (255, 255, 255)
-BLACK = (0 ,0, 0)
+BLACK = (0, 0, 0)
+SPACE = 30
 
 link_list = ["https://finance.yahoo.com/quote/UAVS?p=UAVS&.tsrc=fin-srch", "https://finance.yahoo.com/quote/ATNF?p=ATNF&.tsrc=fin-srch"]
 my_list = []
@@ -58,27 +58,24 @@ def business(url, list):
         print(response.status_code)
 
 
-def write_status():
-    now = datetime.datetime.now()
-    nowDatetime = now.strftime('%Y-%m-%d %H:%M:%S')
-    status = nowDatetime + '\n'
-    print(nowDatetime)
-    for i in range(len(my_list)):
-        status += my_list[i].title + '\n'
-        status += my_list[i].main + ' '+ my_list[i].main_add + "\n"
-        status += my_list[i].sub + ' ' + my_list[i].sub_add + "\n"
-    return status
-
 # 연습
 
 
 
 def runPad():
     global pad, clk
-    font = pygame.font.SysFont(None, 30)  # 폰트 설정
+
+    txt = "waiting"
     exit = False
     tmp = 1
+
+    font = pygame.font.SysFont(None, TEXT_SIZE)
+    pygame.display.update()
+
+    before = list()
+    my_list = list()
     while not exit:
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 print("quit!")
@@ -86,36 +83,57 @@ def runPad():
                 sys.exit()
 
         pad.fill(WHITE)
-        # my_list = []
-        threads = list()
-        my_list = list()
-        for i in range(len(link_list)):
-            thread = threading.Thread(target=business, args=(link_list[i], my_list))
-            thread.start()
-            threads.append(thread)
-        for thread in threads:
-            thread.join()
 
-        print("Finished")
+
+        print(threading.active_count())
+        if threading.active_count() == 1:
+            for i in range(len(link_list)):
+                thread = threading.Thread(target=business, args=(link_list[i], my_list))
+                thread.start()
+
+        if len(before) == 0:
+
+            tmp_text = font.render(txt, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+            pad.blit(tmp_text, (WIDTH // 2 - 100, HEIGHT // 2))
+            txt += "."
+            if txt == "waiting.......":
+                txt = "waiting"
 
         y = 0
-        for i in range(len(my_list)):
-            y += 50
-            text1 = font.render(my_list[i].title, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
-            pad.blit(text1, (50, y))
-            y += 50
-            text2 = font.render(my_list[i].main + ' ' + my_list[i].main_add, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
-            pad.blit(text2, (50, y))
-            y += 50
-            text3 = font.render(my_list[i].sub + ' ' + my_list[i].sub_add, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
-            pad.blit(text3, (50, y))
+
+        if len(my_list) == len(link_list):
+            before = list(my_list)
+            for i in range(len(my_list)):
+                elem = my_list.pop(0)
+                y += SPACE
+                text1 = font.render(elem.title, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+                pad.blit(text1, (50, y))
+                y += SPACE
+                text2 = font.render(elem.main + ' ' + elem.main_add, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+                pad.blit(text2, (50, y))
+                y += SPACE
+                text3 = font.render(elem.sub + ' ' + elem.sub_add, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+                pad.blit(text3, (50, y))
+
+        else:
+            for i in range(len(before)):
+                y += SPACE
+                text1 = font.render(before[i].title, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+                pad.blit(text1, (50, y))
+                y += SPACE
+                text2 = font.render(before[i].main + ' ' + before[i].main_add, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+                pad.blit(text2, (50, y))
+                y += SPACE
+                text3 = font.render(before[i].sub + ' ' + before[i].sub_add, True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
+                pad.blit(text3, (50, y))
+
+
         tmp_text = font.render(str(tmp), True, BLACK)  # 텍스트가 표시된 Surface 를 만듬
         tmp += 1
         pad.blit(tmp_text, (WIDTH-50,HEIGHT-50))
-
-
         pygame.display.update()
-        time.sleep(3)
+        clk.tick(5)
+
 
 
 def initPad():
