@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import sys
 import pygame
 import threading
+import os
 
 X = 30
 WIDTH = 400
@@ -13,9 +14,11 @@ BLACK = (25, 25, 25)
 SPACE = 30
 BLUE = (0, 84, 255)
 RED = (255, 0, 0)
-
+DIR = 'C:/Stocks'
+FILE = DIR+"/real-time-stock.txt"
 link_list = list()
 my_list = []
+
 class Item:
     def __init__(self,title, main, sub, main_add, sub_add):
         self.title = title
@@ -23,6 +26,55 @@ class Item:
         self.sub = sub
         self.main_add = main_add
         self.sub_add =sub_add
+
+
+
+def createFolder(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print('Error: Creating directory. ' + directory)
+
+
+# createFolder('/Users/aaron/Desktop/test')
+
+
+def write_file():
+    createFolder(DIR)
+    text = open(FILE, "w")
+
+    for l in link_list:
+        text.write(l + '\n')
+
+    text.close()
+
+
+def read_file():
+    text = open(FILE, "r")
+    stored = []
+    while True:
+        line = text.readline()
+        if not line:
+            break
+        link_list.append(line.strip())
+    text.close()
+
+
+def check_file_exist():
+    try:
+        if os.path.exists(FILE):
+            ans = input("저장된 항목들을 불러올까요?(y/n):")
+            if ans == "y" or ans == "Y":
+                read_file()
+                return True
+            else:
+                print("파일을 불러오지 않습니다. ㅠㅠ")
+        print()
+        return False
+
+    except OSError:
+        print('Error: Creating directory. ' + DIR)
 
 
 def business(url, list):
@@ -56,13 +108,8 @@ def business(url, list):
         item = Item(title, x, y, z, w)
         list.append(item)
 
-
     else:
         print(response.status_code)
-
-
-# 연습
-
 
 
 def runPad():
@@ -88,13 +135,11 @@ def runPad():
 
         pad.fill(BLACK)
 
-
         if threading.active_count() == 1:
             for i in range(len(link_list)):
 
                 thread = threading.Thread(target=business, args=(link_list[i], my_list))
                 thread.start()
-
 
         if len(before) == 0:
 
@@ -103,16 +148,11 @@ def runPad():
             txt += "."
             if txt == "waiting.......":
                 txt = "waiting"
-
         y = 0
-
         if len(my_list) == len(link_list):
             before = list(my_list)
-
             for i in range(len(my_list)):
                 elem = my_list.pop(0)
-
-
                 y += SPACE
                 text1 = font.render(elem.title, True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
                 pad.blit(text1, (X, y))
@@ -130,34 +170,22 @@ def runPad():
 
                 if (elem.sub_add == 0 and elem.sub == 0) or (elem.sub_add == "" and elem.sub == ""):
                     text3 = font.render("closed", True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
-
                 elif elem.sub_add[0] == "+":
                     text3 = font.render(str(elem.sub) + ' ' + str(elem.sub_add), True,
                                         BLUE)  # 텍스트가 표시된 Surface 를 만듬
-
                 else:
                     text3 = font.render(str(elem.sub) + ' ' + str(elem.sub_add), True, RED)
                 pad.blit(text3, (X, y))
-
                 y += 10
-
-
                 text4 = font.render(line, True, WHITE)
                 pad.blit(text4, (0, y))
 
-
-
-
-
-
         else:
-
             for i in range(len(before)):
                 y += SPACE
                 text1 = font.render(str(before[i].title), True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
                 pad.blit(text1, (X, y))
                 y += SPACE
-
                 if (before[i].main_add == 0 and before[i].main == 0) or (before[i].main_add == "" and before[i].main == ""):
                     text2 = font.render("closed", True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
 
@@ -165,33 +193,25 @@ def runPad():
                     text2 = font.render(str(before[i].main) + ' ' + str(before[i].main_add), True, BLUE)  # 텍스트가 표시된 Surface 를 만듬
                 else:
                     text2 = font.render(str(before[i].main) + ' ' + str(before[i].main_add), True, RED)
-
                 pad.blit(text2, (X, y))
                 y += SPACE
                 if (before[i].sub_add == 0 and before[i].sub == 0) or (before[i].sub_add == "" and before[i].sub == ""):
-
                     text3 = font.render("closed", True,
                                         WHITE)  # 텍스트가 표시된 Surface 를 만듬
-
                 elif before[i].sub_add[0] == "+":
                     text3 = font.render(str(before[i].sub) + ' ' + str(before[i].sub_add), True,
                                         BLUE)  # 텍스트가 표시된 Surface 를 만듬
                 else:
                     text3 = font.render(str(before[i].sub) + ' ' + str(before[i].sub_add), True, RED)
                 pad.blit(text3, (X, y))
-
                 y += 10
-
                 text4 = font.render(line, True, WHITE)
                 pad.blit(text4, (0, y))
-
-
         tmp_text = font.render(str(tmp), True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
         tmp += 1
         pad.blit(tmp_text, (WIDTH-2*X,height-X))
         pygame.display.update()
-        clk.tick(5)
-
+        clk.tick(8)
 
 
 def initPad():
@@ -204,14 +224,13 @@ def initPad():
     clk = pygame.time.Clock()
     runPad()
 
-def search():
 
+def search():
     going = True
     while going:
         search = input("추가하고 싶은 항목 검색: ")
         link = "https://finance.yahoo.com/quote/" + search
         response = requests.get(link)
-
         if response.status_code == 200:
             html = response.text
             soup = BeautifulSoup(html, "html.parser")
@@ -222,38 +241,34 @@ def search():
                 print(title)
             except:
                 print("잘못된 페이지 입니다.")
-
             else:
-                print("링크를 추가합니다.")
+                print("추가합니다.")
                 link_list.append(link)
-
             finally:
-
                 ans = input("\n계속 추가하시겠습니까?(y/n): ")
                 if ans == "y" or ans == "Y":
                     continue
                 elif ans == "n" or ans == "N":
                     print("종료합니다.")
                     going = False
-
                 else:
                     print("계속 추가합니다.")
                     continue
 
-
-
-
         else:
-
             print("ERROR: "+ str(response.status_code))
             print("검색을 재시도 합니다.")
 
 
+get_file = check_file_exist()
+if get_file:
+    print(link_list)
+    initPad()
+else:
+    search()
+    write_file()
+    initPad()
 
-
-search()
-
-initPad()
 
 
 
