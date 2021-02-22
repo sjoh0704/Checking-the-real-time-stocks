@@ -262,7 +262,6 @@ def search():
 
 get_file = check_file_exist()
 if get_file:
-    print(link_list)
     initPad()
 else:
     search()
