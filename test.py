@@ -77,7 +77,7 @@ def check_file_exist():
         print('Error: Creating directory. ' + DIR)
 
 
-def business(url, list):
+def business(url, list, next):
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -106,18 +106,20 @@ def business(url, list):
 
                 w = p.get_text()
         item = Item(title, x, y, z, w)
-        list.append(item)
+        list.append((next, item))
 
     else:
         print(response.status_code)
 
 
 def runPad():
+    tmp = 0
+    start = 0
     global pad, clk
 
     txt = "waiting"
     exit = False
-    tmp = 1
+
     line = "_" * 100
 
     font = pygame.font.SysFont(None, TEXT_SIZE)
@@ -136,10 +138,12 @@ def runPad():
         pad.fill(BLACK)
 
         if threading.active_count() == 1:
+            next = 0
             for i in range(len(link_list)):
-
-                thread = threading.Thread(target=business, args=(link_list[i], my_list))
+                next += 1
+                thread = threading.Thread(target=business, args=(link_list[i], my_list, next))
                 thread.start()
+            my_list.sort()
 
         if len(before) == 0:
 
@@ -152,7 +156,7 @@ def runPad():
         if len(my_list) == len(link_list):
             before = list(my_list)
             for i in range(len(my_list)):
-                elem = my_list.pop(0)
+                elem = my_list.pop(0)[1]
                 y += SPACE
                 text1 = font.render(elem.title, True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
                 pad.blit(text1, (X, y))
@@ -183,33 +187,45 @@ def runPad():
         else:
             for i in range(len(before)):
                 y += SPACE
-                text1 = font.render(str(before[i].title), True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
+                b = before[i][1]
+                text1 = font.render(str(b.title), True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
                 pad.blit(text1, (X, y))
                 y += SPACE
-                if (before[i].main_add == 0 and before[i].main == 0) or (before[i].main_add == "" and before[i].main == ""):
+                if (b.main_add == 0 and b.main == 0) or (b.main_add == "" and b.main == ""):
                     text2 = font.render("closed", True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
 
-                elif before[i].main_add[0] == "+":
-                    text2 = font.render(str(before[i].main) + ' ' + str(before[i].main_add), True, BLUE)  # 텍스트가 표시된 Surface 를 만듬
+                elif b.main_add[0] == "+":
+                    text2 = font.render(str(b.main) + ' ' + str(b.main_add), True, BLUE)  # 텍스트가 표시된 Surface 를 만듬
                 else:
-                    text2 = font.render(str(before[i].main) + ' ' + str(before[i].main_add), True, RED)
+                    text2 = font.render(str(b.main) + ' ' + str(b.main_add), True, RED)
                 pad.blit(text2, (X, y))
                 y += SPACE
-                if (before[i].sub_add == 0 and before[i].sub == 0) or (before[i].sub_add == "" and before[i].sub == ""):
+                if (b.sub_add == 0 and b.sub == 0) or (b.sub_add == "" and b.sub == ""):
                     text3 = font.render("closed", True,
                                         WHITE)  # 텍스트가 표시된 Surface 를 만듬
-                elif before[i].sub_add[0] == "+":
-                    text3 = font.render(str(before[i].sub) + ' ' + str(before[i].sub_add), True,
+                elif b.sub_add[0] == "+":
+                    text3 = font.render(str(b.sub) + ' ' + str(b.sub_add), True,
                                         BLUE)  # 텍스트가 표시된 Surface 를 만듬
                 else:
-                    text3 = font.render(str(before[i].sub) + ' ' + str(before[i].sub_add), True, RED)
+                    text3 = font.render(str(b.sub) + ' ' + str(b.sub_add), True, RED)
                 pad.blit(text3, (X, y))
                 y += 10
                 text4 = font.render(line, True, WHITE)
                 pad.blit(text4, (0, y))
-        tmp_text = font.render(str(tmp), True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
-        tmp += 1
-        pad.blit(tmp_text, (WIDTH-2*X,height-X))
+
+
+        string = ">"*4
+        tmp_text = font.render(string, True, WHITE)  # 텍스트가 표시된 Surface 를 만듬
+        start += 30
+        pad.blit(tmp_text, (start,height-X))
+        if start >= WIDTH:
+
+            start = 0
+
+
+
+
+
         pygame.display.update()
         clk.tick(8)
 
